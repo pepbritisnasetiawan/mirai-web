@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Koneksi diambil dari file .env
+}
+
+// === PRODUCT MODEL ===
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Int
+  stock       Int      @default(0)
+  images      String[]
+  
+  // Relation to order
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// === ORDER MODEL ===
+model Order {
+  id           String    @id @default(cuid())
+  customerName String
+  customerEmail String
+  address      String
+  totalPrice   Int
+  status       OrderStatus @default(PENDING)
+  
+  // Relation to ordered item
+  items OrderItem[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// === ITEM ORDER MODEL ===
+// Connection table between Order and Product
+model OrderItem {
+  id        String  @id @default(cuid())
+  
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  
+  quantity  Int
+  
+  @@unique([orderId, productId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
